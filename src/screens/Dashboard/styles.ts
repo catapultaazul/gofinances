@@ -59,6 +59,7 @@ export const UserName = styled.Text`
   font-size: ${RFValue(14)}px;
   font-family: ${({ theme }) => theme.fonts.bold};
 `;
+export const LogoutButton = styled.TouchableOpacity``;
 
 export const Icon = styled(Feather)`
   color: ${({ theme }) => theme.colors.secondary};

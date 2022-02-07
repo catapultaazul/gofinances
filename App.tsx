@@ -1,4 +1,6 @@
 import React from "react";
+import "intl";
+import "intl/locale-data/jsonp/pt-BR";
 import AppLoading from "expo-app-loading";
 import { ThemeProvider } from "styled-components";
 
@@ -10,6 +12,7 @@ import {
 } from "@expo-google-fonts/poppins";
 
 import theme from "./src/global/styles/theme";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { AppRoutes } from "./src/routes/app.routes";
 import { Dashboard } from "./src/screens/Dashboard";
