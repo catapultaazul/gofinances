@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+
+import { useTheme } from "styled-components";
 
 import { HighlightCard } from "../../components/HighlightCard";
 import {
@@ -24,6 +27,7 @@ import {
   TransactionTitle,
   TransactionList,
   LogoutButton,
+  LoadContainer,
 } from "./styles";
 
 export interface DataListProps extends TransactionCardProps {
@@ -32,6 +36,7 @@ export interface DataListProps extends TransactionCardProps {
 
 interface HighlightProps {
   ammount: string;
+  lastTransaction: string;
 }
 
 interface HighlightData {
@@ -40,11 +45,34 @@ interface HighlightData {
   total: HighlightProps;
 }
 
+function getLastTransactionDate(
+  collection: DataListProps[],
+  type: "positive" | "negative"
+) {
+  const lastTransaction = new Date(
+    Math.max.apply(
+      Math,
+      collection
+        .filter((transaction) => transaction.type === type)
+        .map((transaction) => new Date(transaction.date).getTime())
+    )
+  );
+
+  return `${lastTransaction.getDate()} de ${lastTransaction.toLocaleString(
+    "pt-BR",
+    {
+      month: "long",
+    }
+  )}`;
+}
+
 export function Dashboard() {
+  const [isLoading, setIsLoading] = useState(true);
   const [transactions, setTransactions] = useState<DataListProps[]>([]);
   const [highlightData, setHighlightData] = useState<HighlightData>(
     {} as HighlightData
   );
+  const theme = useTheme();
 
   async function loadTransactions() {
     const dataKey = "@gofinances:transactions";
@@ -86,6 +114,22 @@ export function Dashboard() {
     );
 
     setTransactions(transactionsFormatted);
+
+    const lastTransactionEntries = getLastTransactionDate(
+      transactions,
+      "positive"
+    );
+
+    const lastTransactionExpenses = getLastTransactionDate(
+      transactions,
+      "negative"
+    );
+
+    const totalInterval = `01 à ${lastTransactionExpenses}`;
+
+    console.log(lastTransactionEntries);
+    console.log(lastTransactionExpenses);
+
     const total = entriesTotal - expensesTotal;
     setHighlightData({
       entries: {
@@ -93,20 +137,25 @@ export function Dashboard() {
           style: "currency",
           currency: "BRL",
         }),
+        lastTransaction: `Última entrada dia ${lastTransactionEntries}`,
       },
       expenses: {
         ammount: expensesTotal.toLocaleString("pt-BR", {
           style: "currency",
           currency: "BRL",
         }),
+        lastTransaction: `Última saída dia ${lastTransactionExpenses}`,
       },
       total: {
         ammount: total.toLocaleString("pt-BR", {
           style: "currency",
           currency: "BRL",
         }),
+        lastTransaction: totalInterval,
       },
     });
+
+    setIsLoading(false);
   }
 
   useEffect(() => {
@@ -121,56 +170,64 @@ export function Dashboard() {
 
   return (
     <Container>
-      <Header>
-        <UserWrapper>
-          <UserInfo>
-            <Photo
-              source={{
-                uri: "https://avatars.githubusercontent.com/u/89604752?v=4",
-              }}
+      {isLoading ? (
+        <LoadContainer>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </LoadContainer>
+      ) : (
+        <>
+          <Header>
+            <UserWrapper>
+              <UserInfo>
+                <Photo
+                  source={{
+                    uri: "https://avatars.githubusercontent.com/u/89604752?v=4",
+                  }}
+                />
+                <User>
+                  <UserGreeting>Olá,</UserGreeting>
+                  <UserName>Lucas</UserName>
+                </User>
+              </UserInfo>
+              <GestureHandlerRootView>
+                <LogoutButton onPress={() => {}}>
+                  <Icon name="power" />
+                </LogoutButton>
+              </GestureHandlerRootView>
+            </UserWrapper>
+          </Header>
+          <HighlightCards>
+            <HighlightCard
+              type="up"
+              title="Entradas"
+              ammount={highlightData.entries.ammount}
+              lastTransaction={highlightData.entries.lastTransaction}
             />
-            <User>
-              <UserGreeting>Olá,</UserGreeting>
-              <UserName>Lucas</UserName>
-            </User>
-          </UserInfo>
-          <GestureHandlerRootView>
-            <LogoutButton onPress={() => {}}>
-              <Icon name="power" />
-            </LogoutButton>
-          </GestureHandlerRootView>
-        </UserWrapper>
-      </Header>
-      <HighlightCards>
-        <HighlightCard
-          type="up"
-          title="Entradas"
-          ammount={highlightData.entries.ammount}
-          lastTransaction="Última entrada dia 13 de abril"
-        />
-        <HighlightCard
-          type="down"
-          title="Saídas"
-          ammount={highlightData.expenses.ammount}
-          lastTransaction="Última saída dia 03 de abril"
-        />
-        <HighlightCard
-          type="total"
-          title="Total"
-          ammount={highlightData.total.ammount}
-          lastTransaction="01 à 16 de abril"
-        />
-      </HighlightCards>
+            <HighlightCard
+              type="down"
+              title="Saídas"
+              ammount={highlightData.expenses.ammount}
+              lastTransaction={highlightData.expenses.lastTransaction}
+            />
+            <HighlightCard
+              type="total"
+              title="Total"
+              ammount={highlightData.total.ammount}
+              lastTransaction={highlightData.total.lastTransaction}
+            />
+          </HighlightCards>
 
-      <Transactions>
-        <TransactionTitle>Listagem</TransactionTitle>
+          <Transactions>
+            <TransactionTitle>Listagem</TransactionTitle>
 
-        <TransactionList
-          data={transactions}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <TransactionCard data={item} />}
-        />
-      </Transactions>
+            <TransactionList
+              data={transactions}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => <TransactionCard data={item} />}
+            />
+          </Transactions>
+        </>
+      )}
     </Container>
   );
 }
