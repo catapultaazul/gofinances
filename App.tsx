@@ -16,9 +16,9 @@ import theme from "./src/global/styles/theme";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { AppRoutes } from "./src/routes/app.routes";
-import { Dashboard } from "./src/screens/Dashboard";
-import { Register } from "./src/screens/Register";
-import { CategorySelect } from "./src/screens/CategorySelect";
+import { SignIn } from "./src/screens/SignIn";
+
+import { AuthProvider } from "./src/hooks/auth";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -34,7 +34,10 @@ export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <NavigationContainer>
-        <AppRoutes />
+        {/* <AppRoutes /> */}
+        <AuthProvider>
+          <SignIn />
+        </AuthProvider>
         <StatusBar barStyle="light-content" />
       </NavigationContainer>
     </ThemeProvider>
